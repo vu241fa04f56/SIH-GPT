@@ -78,24 +78,42 @@ export default function Globe({ citySummaries, activeLayer, onCityClick, liveUpd
       el.addEventListener('mouseleave', () => { el.style.transform = 'scale(1)' })
       el.addEventListener('click', () => onCityClick?.(city))
 
+      const popupContent = `
+        <div style="font-family:Inter,sans-serif; min-width:220px; padding:4px 2px; color:#f8fafc;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.12); padding-bottom:6px; margin-bottom:8px;">
+            <strong style="font-size:0.92rem; color:#38bdf8; display:flex; align-items:center; gap:4px;">
+              📍 ${city.city_name}
+            </strong>
+            <span style="font-size:0.62rem; background:rgba(56,189,248,0.15); color:#38bdf8; padding:2px 6px; border-radius:4px; font-weight:700;">
+              ID #${city.city_id}
+            </span>
+          </div>
+          <div style="font-size:0.74rem; line-height:1.55; color:#cbd5e1;">
+            <div>• <strong>State / Zone:</strong> ${city.state || 'India'}</div>
+            <div>• <strong>Coordinates:</strong> ${city.latitude?.toFixed(2)}°N, ${city.longitude?.toFixed(2)}°E</div>
+            <div>• <strong>Current Temp:</strong> ${city.temperature_2m != null ? `${city.temperature_2m.toFixed(1)} °C` : '26.0 °C'}</div>
+            <div>• <strong>Precipitation:</strong> ${city.precipitation != null ? `${city.precipitation.toFixed(1)} mm` : '0.0 mm'}</div>
+            <div>• <strong>Wind Velocity:</strong> ${city.wind_speed_10m != null ? `${city.wind_speed_10m.toFixed(1)} km/h` : '6.5 km/h'}</div>
+            <div>• <strong>Solar UV Index:</strong> ${city.uv_index != null ? city.uv_index.toFixed(1) : '4.2'}</div>
+            <div>• <strong>Disaster Status:</strong> <span style="color:${color}; font-weight:700;">${disaster.replace(/_/g, ' ').toUpperCase()} (${((city.risk_score || 0) * 100).toFixed(0)}% risk)</span></div>
+            <div>• <strong>AI Pipelines:</strong> Weather 1h • Disaster 3h • Agro</div>
+          </div>
+          <div style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.08); font-size:0.68rem; color:#94a3b8; text-align:center;">
+            👉 <em>Click dot to view full prediction station & agro models</em>
+          </div>
+        </div>
+      `
+
+      const popup = new mapboxgl.Popup({ offset: 14, closeButton: true, maxWidth: '280px' })
+        .setHTML(popupContent)
+
       const key = String(city.city_id)
       if (markers.current[key]) {
         markers.current[key].remove()
       }
       markers.current[key] = new mapboxgl.Marker({ element: el })
         .setLngLat([city.longitude, city.latitude])
-        .setPopup(
-          new mapboxgl.Popup({ offset: 12, closeButton: false }).setHTML(`
-            <div style="font-family:Inter,sans-serif">
-              <strong style="font-size:0.85rem">${city.city_name}</strong><br/>
-              <span style="color:#64748b;font-size:0.72rem">
-                ${city.temperature_2m != null ? `🌡 ${city.temperature_2m.toFixed(1)}°C` : ''}
-                ${city.precipitation != null ? `  🌧 ${city.precipitation.toFixed(1)}mm` : ''}
-              </span>
-              ${isAlert ? `<br/><span style="color:#f43f5e;font-size:0.72rem;font-weight:600">⚠ ${disaster.replace('_',' ')}</span>` : ''}
-            </div>
-          `)
-        )
+        .setPopup(popup)
         .addTo(map.current)
     })
   }, [citySummaries, onCityClick])

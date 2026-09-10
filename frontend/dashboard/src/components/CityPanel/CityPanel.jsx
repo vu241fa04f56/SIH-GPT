@@ -158,6 +158,62 @@ export default function CityPanel({ city, onClose }) {
           ) : (
             <>
               {/* ═══════════════════════════════════════════════════════════════ */}
+              {/* ── KEY PREDICTION POINTS (BULLET SUMMARY) ──────────────────── */}
+              {/* ═══════════════════════════════════════════════════════════════ */}
+              <div style={{
+                marginTop: 14,
+                padding: '12px 14px',
+                borderRadius: 12,
+                background: 'rgba(15, 23, 42, 0.75)',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+              }}>
+                <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.08em', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>🎯 KEY PREDICTION POINTS</span>
+                  <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>• Real-Time Synthesis</span>
+                </div>
+                <div style={{ fontSize: '0.74rem', lineHeight: '1.65', color: '#e2e8f0' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 4 }}>
+                    <span style={{ color: '#fbbf24', fontSize: '0.9rem', lineHeight: 1 }}>•</span>
+                    <div>
+                      <strong style={{ color: '#fbbf24' }}>Weather (1h Forecast):</strong>{' '}
+                      Temp <strong>{fmt(forecast.temperature_2m)} °C</strong>
+                      {tempDiff != null && (
+                        <span style={{ color: tempDiff >= 0 ? '#f87171' : '#60a5fa', marginLeft: 4, fontSize: '0.7rem' }}>
+                          ({tempDiff >= 0 ? '▲ +' : '▼ '}{tempDiff.toFixed(1)}° vs current)
+                        </span>
+                      )}, Rain: <strong>{fmt(forecast.precipitation)} mm</strong>, Wind: <strong>{fmt(forecast.wind_speed_10m)} km/h</strong>, RH: <strong>{fmt(forecast.relative_humidity_2m)}%</strong>.
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 4 }}>
+                    <span style={{ color: severityColor, fontSize: '0.9rem', lineHeight: 1 }}>•</span>
+                    <div>
+                      <strong style={{ color: severityColor }}>Disaster Risk (3h Lead):</strong>{' '}
+                      <strong>{disaster?.disaster_type && disaster.disaster_type !== 'none' ? disaster.disaster_type.replace(/_/g, ' ').toUpperCase() : 'NO HAZARD DETECTED'}</strong>
+                      {' '}— Risk Score: <strong>{(riskScore * 100).toFixed(1)}%</strong> ({severity.toUpperCase()} RISK).
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, marginBottom: 4 }}>
+                    <span style={{ color: '#34d399', fontSize: '0.9rem', lineHeight: 1 }}>•</span>
+                    <div>
+                      <strong style={{ color: '#34d399' }}>Agro Advisory ({selectedCrop.toUpperCase()}):</strong>{' '}
+                      Stage: <strong>{advisory?.growth_stage || 'Active Growth'}</strong> | Irrigation: <strong>{agroPreds.irrigation || 'NO_IRRIGATION'}</strong> | Spraying Window: <strong>{agroPreds.spraying_suitability || 'SAFE'}</strong>.
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
+                    <span style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1 }}>•</span>
+                    <div>
+                      <strong style={{ color: '#94a3b8' }}>Official Safety Protocol:</strong>{' '}
+                      <span style={{ color: 'var(--text-muted)' }}>{disaster?.recommended_action || 'Current atmospheric conditions are normal.'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ═══════════════════════════════════════════════════════════════ */}
               {/* ── 1. WEATHER MODEL PREDICTION (1-HOUR AHEAD) ──────────────── */}
               {/* ═══════════════════════════════════════════════════════════════ */}
               <div style={{
