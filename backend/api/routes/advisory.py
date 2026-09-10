@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 from sqlalchemy import desc, select
 
-from backend.services.geo_service import get_city_by_id
+from backend.services.geo_service import get_city_by_id, resolve_city
 from data_pipeline.preprocessing.preprocess_agro import CROP_MAP, GROWTH_STAGE_MAP
 from data_pipeline.storage.db_connection import get_async_session
 from data_pipeline.storage.db_models import AgroRecord, WeatherRecord
@@ -29,16 +29,17 @@ class AdvisoryResponse(BaseModel):
     timestamp: datetime
 
 
-@router.get("/{city_id:int}", response_model=AdvisoryResponse)
+@router.get("/{city_identifier}", response_model=AdvisoryResponse)
 async def get_advisory(
-    city_id: int,
+    city_identifier: str,
     request: Request,
     crop: str = Query(default="rice", description="Crop type"),
 ):
     """Return agro advisory for a city and crop type."""
-    city = await get_city_by_id(city_id)
+    city = await resolve_city(city_identifier)
     if not city:
-        raise HTTPException(status_code=404, detail=f"City {city_id} not found")
+        raise HTTPException(status_code=404, detail=f"City '{city_identifier}' not found")
+    city_id = city.id
 
     # Get latest weather as feature input
     async with get_async_session() as session:

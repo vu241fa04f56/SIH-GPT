@@ -69,7 +69,7 @@ class WeatherPredictionResponse(BaseModel):
 
 
 class WeatherCitySummary(BaseModel):
-    """Compact city summary for map markers."""
+    """Compact city summary for map markers and interactive layer overlays."""
     city_id: int
     city_name: str
     latitude: float
@@ -78,5 +78,10 @@ class WeatherCitySummary(BaseModel):
     precipitation: Optional[float] = None
     wind_speed_10m: Optional[float] = None
     uv_index: Optional[float] = None
+    wind_direction_10m: Optional[float] = None
+    relative_humidity_2m: Optional[float] = None
+    us_aqi: Optional[float] = None
+    pm2_5: Optional[float] = None
+    state: Optional[str] = None
     risk_score: Optional[float] = Field(default=0.0)
     disaster_type: Optional[str] = None

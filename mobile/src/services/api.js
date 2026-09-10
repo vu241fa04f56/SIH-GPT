@@ -23,7 +23,7 @@ const chatbot = axios.create({
 // ─── Weather ──────────────────────────────────────────────────────────────────
 
 export const fetchWeather = async (cityId) => {
-  const res = await backend.get(`/predict/weather/${cityId}`);
+  const res = await backend.get(`/predict/weather/${encodeURIComponent(cityId)}`);
   return res.data;
 };
 
@@ -35,7 +35,7 @@ export const fetchAllCities = async () => {
 // ─── Disaster ─────────────────────────────────────────────────────────────────
 
 export const fetchDisasterRisk = async (cityId) => {
-  const res = await backend.get(`/predict/disaster/${cityId}`);
+  const res = await backend.get(`/predict/disaster/${encodeURIComponent(cityId)}`);
   return res.data;
 };
 
@@ -52,7 +52,7 @@ export const fetchDisasterOverlay = async () => {
 // ─── Agro Advisory ────────────────────────────────────────────────────────────
 
 export const fetchAgroAdvisory = async (cityId, crop = 'rice') => {
-  const res = await backend.get(`/advisory/${cityId}`, { params: { crop } });
+  const res = await backend.get(`/advisory/${encodeURIComponent(cityId)}`, { params: { crop } });
   return res.data;
 };
 

@@ -14,7 +14,7 @@ from sqlalchemy import desc, select
 
 from backend.schemas.disaster_schema import DisasterMapOverlay, DisasterPredictionResponse
 from backend.services.alert_service import broadcast_disaster_alert
-from backend.services.geo_service import all_cities, get_city_by_id, subscriptions_in_risk_zone
+from backend.services.geo_service import all_cities, get_city_by_id, resolve_city, subscriptions_in_risk_zone
 from data_pipeline.storage.db_connection import get_async_session
 from data_pipeline.storage.db_models import DisasterRecord, WeatherRecord
 
@@ -48,15 +48,56 @@ ACTION_MAP = {
 }
 
 
-@router.get("/{city_id:int}", response_model=DisasterPredictionResponse)
-async def predict_disaster(city_id: int, request: Request):
+@router.get("/overlay", response_model=DisasterMapOverlay)
+@router.get("/overlay/all", response_model=DisasterMapOverlay)
+async def disaster_overlay_all(request: Request):
+    """Return disaster risk for all cities (used by the frontend map overlay)."""
+    cities = await all_cities()
+    inference = request.app.state.inference
+    city_data = []
+
+    for city in cities:
+        async with get_async_session() as session:
+            result = await session.execute(
+                select(WeatherRecord)
+                .where(WeatherRecord.city_id == city.id)
+                .order_by(desc(WeatherRecord.timestamp))
+                .limit(48)
+            )
+            history = result.scalars().all()
+            latest_wx = history[0] if history else None
+
+        features = {}
+        if latest_wx:
+            for col in ["temperature_2m", "relative_humidity_2m", "precipitation", "rain",
+                        "wind_speed_10m", "wind_gusts_10m", "surface_pressure", "pressure_msl",
+                        "weather_code", "us_aqi", "pm2_5"]:
+                features[col] = getattr(latest_wx, col, 0.0) or 0.0
+
+        pred = inference.predict_disaster(features, history=history, elevation=city.elevation_m or 0.0)
+        city_data.append({
+            "city_id": city.id,
+            "city_name": city.name,
+            "lat": city.latitude,
+            "lon": city.longitude,
+            "disaster_type": pred.get("disaster_type", "none"),
+            "risk_score": pred.get("risk_score", 0.0),
+        })
+
+    return DisasterMapOverlay(cities=city_data, generated_at=datetime.now(timezone.utc))
+
+
+@router.get("/{city_identifier}", response_model=DisasterPredictionResponse)
+async def predict_disaster(city_identifier: str, request: Request):
     """
-    Return 3-hour-ahead disaster risk prediction for a city.
+    Return 3-hour-ahead disaster risk prediction for a city by name or ID.
     Triggers FCM alerts if risk_score > threshold.
     """
-    city = await get_city_by_id(city_id)
+    city = await resolve_city(city_identifier)
     if not city:
-        raise HTTPException(status_code=404, detail=f"City {city_id} not found")
+        raise HTTPException(status_code=404, detail=f"City '{city_identifier}' not found")
+    city_id = city.id
+
 
     # Get latest weather for feature input
     async with get_async_session() as session:
@@ -108,41 +149,3 @@ async def predict_disaster(city_id: int, request: Request):
         is_active=is_active,
     )
 
-
-@router.get("/overlay", response_model=DisasterMapOverlay)
-@router.get("/overlay/all", response_model=DisasterMapOverlay)
-async def disaster_overlay_all(request: Request):
-    """Return disaster risk for all cities (used by the frontend map overlay)."""
-    cities = await all_cities()
-    inference = request.app.state.inference
-    city_data = []
-
-    for city in cities:
-        async with get_async_session() as session:
-            result = await session.execute(
-                select(WeatherRecord)
-                .where(WeatherRecord.city_id == city.id)
-                .order_by(desc(WeatherRecord.timestamp))
-                .limit(48)
-            )
-            history = result.scalars().all()
-            latest_wx = history[0] if history else None
-
-        features = {}
-        if latest_wx:
-            for col in ["temperature_2m", "relative_humidity_2m", "precipitation", "rain",
-                        "wind_speed_10m", "wind_gusts_10m", "surface_pressure", "pressure_msl",
-                        "weather_code", "us_aqi", "pm2_5"]:
-                features[col] = getattr(latest_wx, col, 0.0) or 0.0
-
-        pred = inference.predict_disaster(features, history=history, elevation=city.elevation_m or 0.0)
-        city_data.append({
-            "city_id": city.id,
-            "city_name": city.name,
-            "lat": city.latitude,
-            "lon": city.longitude,
-            "disaster_type": pred.get("disaster_type", "none"),
-            "risk_score": pred.get("risk_score", 0.0),
-        })
-
-    return DisasterMapOverlay(cities=city_data, generated_at=datetime.now(timezone.utc))

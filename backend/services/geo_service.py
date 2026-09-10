@@ -35,6 +35,17 @@ async def get_city_by_id(city_id: int) -> City | None:
         return result.scalar_one_or_none()
 
 
+async def resolve_city(identifier: str | int) -> City | None:
+    """Resolve city by ID (int or numeric string) or case-insensitive city name."""
+    if isinstance(identifier, int):
+        return await get_city_by_id(identifier)
+    val = str(identifier).strip()
+    if val.isdigit():
+        return await get_city_by_id(int(val))
+    return await get_city_by_name(val)
+
+
+
 async def nearest_city(lat: float, lon: float) -> City | None:
     """
     Return the nearest city to a given (lat, lon) using PostGIS ST_Distance.

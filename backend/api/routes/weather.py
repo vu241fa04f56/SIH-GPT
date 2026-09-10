@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from backend.schemas.weather_schema import WeatherCitySummary, WeatherPredictionResponse
-from backend.services.geo_service import all_cities, get_city_by_id, nearest_city
+from backend.services.geo_service import all_cities, get_city_by_id, nearest_city, resolve_city
 from backend.services.inference_service import WEATHER_OUTPUT_FIELDS
 from backend.services.websocket_service import ws_manager
 from data_pipeline.storage.db_connection import get_async_session
@@ -22,15 +22,53 @@ from sqlalchemy import select, desc
 router = APIRouter()
 
 
-@router.get("/{city_id:int}", response_model=WeatherPredictionResponse)
-async def predict_weather(city_id: int, request: Request):
+@router.get("/summary/all", response_model=list[WeatherCitySummary])
+async def weather_summary_all(request: Request):
     """
-    Return current weather features + 1-hour model forecast for a city.
+    Return compact weather snapshot for all cities (used for map marker rendering).
+    """
+    cities = await all_cities()
+    summaries = []
+
+    for city in cities:
+        async with get_async_session() as session:
+            result = await session.execute(
+                select(WeatherRecord)
+                .where(WeatherRecord.city_id == city.id)
+                .order_by(desc(WeatherRecord.timestamp))
+                .limit(1)
+            )
+            latest = result.scalar_one_or_none()
+
+        summaries.append(WeatherCitySummary(
+            city_id=city.id,
+            city_name=city.name,
+            latitude=city.latitude,
+            longitude=city.longitude,
+            temperature_2m=getattr(latest, "temperature_2m", None),
+            precipitation=getattr(latest, "precipitation", None),
+            wind_speed_10m=getattr(latest, "wind_speed_10m", None),
+            uv_index=getattr(latest, "uv_index", None),
+            wind_direction_10m=getattr(latest, "wind_direction_10m", 210.0),
+            relative_humidity_2m=getattr(latest, "relative_humidity_2m", None),
+            us_aqi=getattr(latest, "us_aqi", None),
+            pm2_5=getattr(latest, "pm2_5", None),
+            state=getattr(city, "state", "India"),
+        ))
+
+    return summaries
+
+
+@router.get("/{city_identifier}", response_model=WeatherPredictionResponse)
+async def predict_weather(city_identifier: str, request: Request):
+    """
+    Return current weather features + 1-hour model forecast for a city by name or ID.
     Also broadcasts the result to all WebSocket clients.
     """
-    city = await get_city_by_id(city_id)
+    city = await resolve_city(city_identifier)
     if not city:
-        raise HTTPException(status_code=404, detail=f"City {city_id} not found")
+        raise HTTPException(status_code=404, detail=f"City '{city_identifier}' not found")
+    city_id = city.id
 
     # Fetch latest raw record from DB
     async with get_async_session() as session:
@@ -42,6 +80,7 @@ async def predict_weather(city_id: int, request: Request):
         )
         history = result.scalars().all()
         latest = history[0] if history else None
+
 
     if latest is None:
         raise HTTPException(
@@ -88,35 +127,3 @@ async def predict_weather(city_id: int, request: Request):
 
     return response
 
-
-@router.get("/summary/all", response_model=list[WeatherCitySummary])
-async def weather_summary_all(request: Request):
-    """
-    Return compact weather snapshot for all cities (used for map marker rendering).
-    """
-    cities = await all_cities()
-    summaries = []
-    inference = request.app.state.inference
-
-    for city in cities:
-        async with get_async_session() as session:
-            result = await session.execute(
-                select(WeatherRecord)
-                .where(WeatherRecord.city_id == city.id)
-                .order_by(desc(WeatherRecord.timestamp))
-                .limit(1)
-            )
-            latest = result.scalar_one_or_none()
-
-        summaries.append(WeatherCitySummary(
-            city_id=city.id,
-            city_name=city.name,
-            latitude=city.latitude,
-            longitude=city.longitude,
-            temperature_2m=getattr(latest, "temperature_2m", None),
-            precipitation=getattr(latest, "precipitation", None),
-            wind_speed_10m=getattr(latest, "wind_speed_10m", None),
-            uv_index=getattr(latest, "uv_index", None),
-        ))
-
-    return summaries

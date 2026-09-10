@@ -76,29 +76,31 @@ export default function CityPanel({ city, onClose }) {
   const [loading, setLoading]       = useState(false)
   const [agroLoading, setAgroLoading] = useState(false)
 
-  // ── Load full prediction bundle for selected city ─────────────────────────
+  const cityName = city?.city_name || city?.name || (city?.city_id ? String(city.city_id) : '')
+
+  // ── Load full prediction bundle for selected city by NAME ─────────────────
   useEffect(() => {
-    if (!city?.city_id) return
+    if (!cityName) return
     setLoading(true)
     Promise.all([
-      getWeather(city.city_id).catch(() => null),
-      getDisasterRisk(city.city_id).catch(() => null),
-      getAdvisory(city.city_id, selectedCrop).catch(() => null),
+      getWeather(cityName).catch(() => null),
+      getDisasterRisk(cityName).catch(() => null),
+      getAdvisory(cityName, selectedCrop).catch(() => null),
     ]).then(([wx, dis, adv]) => {
       setWeather(wx)
       setDisaster(dis)
       setAdvisory(adv)
       setLoading(false)
     })
-  }, [city?.city_id])
+  }, [cityName])
 
   // ── Reload agro advisory on crop switch ───────────────────────────────────
   const handleCropChange = (crop) => {
     const c = crop.toLowerCase()
     setSelectedCrop(c)
-    if (!city?.city_id) return
+    if (!cityName) return
     setAgroLoading(true)
-    getAdvisory(city.city_id, c)
+    getAdvisory(cityName, c)
       .then((adv) => setAdvisory(adv))
       .catch(() => {})
       .finally(() => setAgroLoading(false))
@@ -139,7 +141,7 @@ export default function CityPanel({ city, onClose }) {
                 </span>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
               </div>
-              <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800 }}>{city.city_name}</h2>
+              <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800 }}>{cityName}</h2>
               <div className="city-state" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                 {city.state || 'India'} • {city.latitude?.toFixed(2)}°N, {city.longitude?.toFixed(2)}°E
               </div>
@@ -150,10 +152,43 @@ export default function CityPanel({ city, onClose }) {
             >✕</button>
           </div>
 
+          {/* Model Input Parameter Badge */}
+          <div style={{
+            marginTop: 10,
+            marginBottom: 6,
+            padding: '8px 12px',
+            borderRadius: 8,
+            background: 'linear-gradient(90deg, rgba(56,189,248,0.12), rgba(16,185,129,0.12))',
+            border: '1px solid rgba(56,189,248,0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.74rem' }}>
+              <span style={{ color: '#38bdf8' }}>⚡</span>
+              <span style={{ color: '#94a3b8' }}>City Model Input:</span>
+              <strong style={{ color: '#38bdf8', fontSize: '0.82rem' }}>"{cityName}"</strong>
+            </div>
+            <span style={{
+              fontSize: '0.62rem',
+              fontWeight: 800,
+              background: '#38bdf8',
+              color: '#0f172a',
+              padding: '2px 8px',
+              borderRadius: 6,
+              letterSpacing: '0.04em',
+            }}>
+              3 ML MODELS EXECUTED
+            </span>
+          </div>
+
           {loading ? (
             <div style={{ textAlign: 'center', padding: '30px 0' }}>
               <div className="spinner" />
-              <div style={{ marginTop: 8, fontSize: '0.78rem', color: 'var(--text-muted)' }}>Executing model inference engines...</div>
+              <div style={{ marginTop: 8, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                Feeding "{cityName}" to Weather, Disaster & Agro Models...
+              </div>
             </div>
           ) : (
             <>
@@ -225,7 +260,7 @@ export default function CityPanel({ city, onClose }) {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#14b8a6', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    🌦 1-HOUR WEATHER FORECAST (MODEL)
+                    🌦 MODEL 1 OUTPUT: 1-HOUR WEATHER FORECAST
                   </span>
                   <span style={{ fontSize: '0.62rem', background: 'rgba(20,184,166,0.2)', color: '#14b8a6', padding: '2px 6px', borderRadius: 6, fontWeight: 700 }}>
                     ⚡ XGBOOST INFERENCE
@@ -305,7 +340,7 @@ export default function CityPanel({ city, onClose }) {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.68rem', fontWeight: 800, color: severityColor, letterSpacing: '0.06em' }}>
-                      🚨 3-HOUR DISASTER RISK PREDICTION
+                      🚨 MODEL 2 OUTPUT: DISASTER RISK PREDICTION
                     </span>
                     <span style={{
                       fontSize: '0.62rem',
@@ -363,7 +398,7 @@ export default function CityPanel({ city, onClose }) {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <span style={{ fontSize: '0.68rem', color: 'var(--accent-green)', fontWeight: 800, letterSpacing: '0.06em' }}>
-                    🌾 CROP INTELLIGENCE & ADVISORY (MODEL)
+                    🌾 MODEL 3 OUTPUT: AGRO-METEOROLOGICAL ADVISORY
                   </span>
                   <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)' }}>
                     Stage: <strong style={{ color: 'var(--text-primary)' }}>{advisory?.growth_stage || 'Vegetative'}</strong>
