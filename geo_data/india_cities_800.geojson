@@ -1,0 +1,17 @@
+{"type":"FeatureCollection","name":"india_cities_sample","features":[
+{"type":"Feature","properties":{"city_id":1,"name":"Mumbai","state":"Maharashtra","is_coastal":true},"geometry":{"type":"Point","coordinates":[72.8777,19.076]}},
+{"type":"Feature","properties":{"city_id":2,"name":"Delhi","state":"Delhi","is_coastal":false},"geometry":{"type":"Point","coordinates":[77.209,28.6139]}},
+{"type":"Feature","properties":{"city_id":3,"name":"Bengaluru","state":"Karnataka","is_coastal":false},"geometry":{"type":"Point","coordinates":[77.5946,12.9716]}},
+{"type":"Feature","properties":{"city_id":4,"name":"Chennai","state":"Tamil Nadu","is_coastal":true},"geometry":{"type":"Point","coordinates":[80.2707,13.0827]}},
+{"type":"Feature","properties":{"city_id":5,"name":"Kolkata","state":"West Bengal","is_coastal":true},"geometry":{"type":"Point","coordinates":[88.3639,22.5726]}},
+{"type":"Feature","properties":{"city_id":6,"name":"Hyderabad","state":"Telangana","is_coastal":false},"geometry":{"type":"Point","coordinates":[78.4867,17.385]}},
+{"type":"Feature","properties":{"city_id":7,"name":"Ahmedabad","state":"Gujarat","is_coastal":false},"geometry":{"type":"Point","coordinates":[72.5714,23.0225]}},
+{"type":"Feature","properties":{"city_id":8,"name":"Pune","state":"Maharashtra","is_coastal":false},"geometry":{"type":"Point","coordinates":[73.8567,18.5204]}},
+{"type":"Feature","properties":{"city_id":9,"name":"Surat","state":"Gujarat","is_coastal":true},"geometry":{"type":"Point","coordinates":[72.8311,21.1702]}},
+{"type":"Feature","properties":{"city_id":10,"name":"Jaipur","state":"Rajasthan","is_coastal":false},"geometry":{"type":"Point","coordinates":[75.7873,26.9124]}},
+{"type":"Feature","properties":{"city_id":11,"name":"Kochi","state":"Kerala","is_coastal":true},"geometry":{"type":"Point","coordinates":[76.2673,9.9312]}},
+{"type":"Feature","properties":{"city_id":12,"name":"Guwahati","state":"Assam","is_coastal":false},"geometry":{"type":"Point","coordinates":[91.7362,26.1445]}},
+{"type":"Feature","properties":{"city_id":13,"name":"Chandigarh","state":"Chandigarh","is_coastal":false},"geometry":{"type":"Point","coordinates":[76.7794,30.7333]}},
+{"type":"Feature","properties":{"city_id":14,"name":"Srinagar","state":"J&K","is_coastal":false},"geometry":{"type":"Point","coordinates":[74.7973,34.0837]}},
+{"type":"Feature","properties":{"city_id":15,"name":"Visakhapatnam","state":"Andhra Pradesh","is_coastal":true},"geometry":{"type":"Point","coordinates":[83.2185,17.6868]}}
+]}

@@ -1,0 +1,7 @@
+{
+  "artifact": "WeatherGPT_39_Feature_Model.pickle",
+  "bundled": true,
+  "input_features": 39,
+  "predicted_targets": 18,
+  "notes": "Uses current observations, location, circular time/wind encodings and 1/2/3/24-hour lags. Non-target API fields are carried forward in the response."
+}

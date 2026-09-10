@@ -1,0 +1,7 @@
+{
+  "artifact": "disaster_prediction_pipeline.pkl",
+  "bundled": true,
+  "input_features": 20,
+  "classes": 18,
+  "notes": "The saved RobustScaler and LabelEncoder are applied by InferenceService."
+}

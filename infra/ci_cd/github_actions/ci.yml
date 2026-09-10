@@ -1,0 +1,56 @@
+name: WeatherGPT CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: weathergpt
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: weathergpt
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql+asyncpg://weathergpt:password@localhost:5432/weathergpt
+          SYNC_DATABASE_URL: postgresql://weathergpt:password@localhost:5432/weathergpt
+          APP_ENV: development
+          API_SECRET_KEY: test-secret
+        run: pytest backend/tests/ -v --tb=short
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: cd frontend/dashboard && npm ci && npm run build
+        env:
+          VITE_MAPBOX_TOKEN: pk.placeholder
+          VITE_API_URL: http://localhost:8000
+          VITE_WS_URL: ws://localhost:8000/ws
